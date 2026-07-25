@@ -71,6 +71,10 @@ Stock decrement, oversell prevention, and concurrent order coordination remain f
 
 Restricted order status changes to the valid lifecycle sequence `PLACED → ACCEPTED → PREPARING → OUT_FOR_DELIVERY → DELIVERED`. Restaurant rejection is represented by terminal `REJECTED`, and customer cancellation by terminal `CANCELLED`; both are allowed from `PLACED`, `ACCEPTED`, and `PREPARING` only. Skipped, repeated, backward, delivery-stage rejection, and delivery-stage cancellation transitions are rejected with validation errors. Added parameterized unit coverage for both outcomes.
 
+### Iteration 13 — Delivery assignment
+
+Added one-to-one order assignment with a delivery partner. The order stores an optimistic-lock version, the assignment has a unique order constraint, and concurrent assignment conflicts are converted into a resource conflict instead of allowing two partners to claim the same order. Added assignment APIs, DTOs, mapping, Flyway migration, and unit tests for first assignment, duplicate assignment, and optimistic-lock conflict handling.
+
 ### Iteration 11 — Order placement integration
 
 Added a transactional order-placement workflow that accepts a customer, restaurant, payment reference, and requested menu items in one request. The service validates the customer, restaurant, item ownership, item availability, duplicate items, and payment-reference uniqueness; locks menu rows for update; deducts stock; calculates the payment total; creates the payment; creates the order; and creates all order items.

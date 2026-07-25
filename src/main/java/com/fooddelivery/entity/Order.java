@@ -13,6 +13,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Version;
 import lombok.Getter;
 
 import java.time.Instant;
@@ -24,6 +26,9 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", nullable = false)
@@ -44,6 +49,9 @@ public class Order {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY)
+    private DeliveryAssignment deliveryAssignment;
+
     protected Order() {
     }
 
@@ -61,5 +69,9 @@ public class Order {
 
     public void updateStatus(OrderStatus status) {
         this.status = status;
+    }
+
+    public void assignDeliveryPartner(DeliveryAssignment assignment) {
+        this.deliveryAssignment = assignment;
     }
 }
