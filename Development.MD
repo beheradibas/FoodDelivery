@@ -89,6 +89,10 @@ Added customer registration, login, signed JWT issuance and validation, stateles
 
 Role authorization is enforced with controller-level `@PreAuthorize` annotations. The security configuration now focuses on JWT filtering, stateless sessions, and public endpoint exceptions, while ownership and resource-level checks remain in services.
 
+### Integration-test coverage
+
+Added shared-profile integration coverage for restaurant creation, menu CRUD, order placement, delivery-partner assignment, valid order status progression, and delivered-order reviews. These tests use the existing H2 test profile and `AbstractIntegrationTest`; production application code was not changed for this test addition.
+
 ### Iteration 11 — Order placement integration
 
 Added a transactional order-placement workflow that accepts a customer, restaurant, payment reference, and requested menu items in one request. The service validates the customer, restaurant, item ownership, item availability, duplicate items, and payment-reference uniqueness; locks menu rows for update; deducts stock; calculates the payment total; creates the payment; creates the order; and creates all order items.
