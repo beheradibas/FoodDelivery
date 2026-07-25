@@ -16,14 +16,14 @@ Spring Boot backend for a food delivery order management system, built increment
 ```text
 com.fooddelivery
 ├── config       # Framework configuration
-├── controller   # HTTP endpoints (future iterations)
-├── dto          # Request and response DTOs (future iterations)
-├── entity       # JPA entities (future iterations)
+├── controller   # HTTP endpoints
+├── dto          # Request and response DTOs
+├── entity       # JPA entities
 ├── exception    # Global error handling
-├── mapper       # DTO mappers (future iterations)
-├── repository   # Persistence access (future iterations)
-├── security     # JWT components (future iterations)
-└── service      # Business logic (future iterations)
+├── mapper       # DTO mappers
+├── repository   # Persistence access
+├── security     # JWT components
+└── service      # Business logic
 ```
 
 ## Configuration
