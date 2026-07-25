@@ -15,11 +15,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/owners/{ownerId}/restaurants/{restaurantId}/menu-items")
+@PreAuthorize("hasRole('RESTAURANT_OWNER')")
 public class OwnerMenuItemController {
     private final MenuItemService menuItemService;
 

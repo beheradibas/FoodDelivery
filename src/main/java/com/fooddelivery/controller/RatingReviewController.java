@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -23,6 +24,7 @@ public class RatingReviewController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<RatingReviewResponse> createReview(@Valid @RequestBody CreateRatingReviewRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ratingReviewService.createReview(request));
     }

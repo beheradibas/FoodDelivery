@@ -19,6 +19,11 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+security:
+  jwt:
+    secret: ${JWT_SECRET:VGhpc0lzQVN1ZmZpY2llbnRseUxvbmdTZWNyZXRLZXlGb3JEZXZlbG9wbWVudA==}
+    expiration-millis: ${JWT_EXPIRATION_MILLIS:3600000}
+
 server:
   error:
     include-message: never

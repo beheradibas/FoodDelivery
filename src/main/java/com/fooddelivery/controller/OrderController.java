@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -32,11 +33,13 @@ public class OrderController {
     }
 
     @PostMapping("/place")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<OrderPlacementResponse> placeOrder(@Valid @RequestBody PlaceOrderRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderPlacementService.placeOrder(request));
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(request));
     }
@@ -47,11 +50,13 @@ public class OrderController {
     }
 
     @GetMapping("/customers/{customerId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<List<OrderResponse>> getCustomerOrders(@PathVariable Long customerId) {
         return ResponseEntity.ok(orderService.getCustomerOrders(customerId));
     }
 
     @GetMapping("/restaurants/{restaurantId}")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
     public ResponseEntity<List<OrderResponse>> getRestaurantOrders(@PathVariable Long restaurantId) {
         return ResponseEntity.ok(orderService.getRestaurantOrders(restaurantId));
     }

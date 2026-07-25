@@ -83,6 +83,12 @@ Added a Spring `OrderStatusChangedEvent` published when a valid order status tra
 
 Added customer ratings and reviews linked to delivered orders. The service verifies that the order is delivered, belongs to the requesting customer, and has not already been reviewed by that customer. Added validation, DTO mapping, review APIs, Flyway migration, and unit tests for successful and rejected review attempts.
 
+### Iteration 16 — JWT authentication and authorization
+
+Added customer registration, login, signed JWT issuance and validation, stateless Spring Security configuration, and role-based endpoint authorization for admins, restaurant owners, customers, and delivery partners. Passwords continue to be stored only as encoded values, and public access is limited to authentication and API documentation endpoints. Added JWT and authentication service tests.
+
+Role authorization is enforced with controller-level `@PreAuthorize` annotations. The security configuration now focuses on JWT filtering, stateless sessions, and public endpoint exceptions, while ownership and resource-level checks remain in services.
+
 ### Iteration 11 — Order placement integration
 
 Added a transactional order-placement workflow that accepts a customer, restaurant, payment reference, and requested menu items in one request. The service validates the customer, restaurant, item ownership, item availability, duplicate items, and payment-reference uniqueness; locks menu rows for update; deducts stock; calculates the payment total; creates the payment; creates the order; and creates all order items.
