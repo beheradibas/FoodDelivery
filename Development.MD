@@ -79,6 +79,10 @@ Added one-to-one order assignment with a delivery partner. The order stores an o
 
 Added a Spring `OrderStatusChangedEvent` published when a valid order status transition occurs. Customer, restaurant, and assigned delivery-partner listeners consume the event with `@Async`, using a dedicated notification executor so notification dispatch does not run on the request thread. The notification service is transport-neutral and currently provides the integration boundary for real channels. Added listener tests, including the unassigned-order case.
 
+### Iteration 15 — Ratings and reviews
+
+Added customer ratings and reviews linked to delivered orders. The service verifies that the order is delivered, belongs to the requesting customer, and has not already been reviewed by that customer. Added validation, DTO mapping, review APIs, Flyway migration, and unit tests for successful and rejected review attempts.
+
 ### Iteration 11 — Order placement integration
 
 Added a transactional order-placement workflow that accepts a customer, restaurant, payment reference, and requested menu items in one request. The service validates the customer, restaurant, item ownership, item availability, duplicate items, and payment-reference uniqueness; locks menu rows for update; deducts stock; calculates the payment total; creates the payment; creates the order; and creates all order items.
