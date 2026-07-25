@@ -72,6 +72,19 @@ class UserServiceTest {
     }
 
     @Test
+    void createUserSupportsRestaurantOwnerRole() {
+        CreateUserRequest ownerRequest = new CreateUserRequest(
+                "Ravi", "Kumar", "ravi@example.com", "password123", Role.RESTAURANT_OWNER);
+        when(userRepository.existsByEmail(ownerRequest.email())).thenReturn(false);
+        when(passwordEncoder.encode(ownerRequest.password())).thenReturn("encoded-password");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserResponse response = userService.createUser(ownerRequest);
+
+        assertThat(response.role()).isEqualTo(Role.RESTAURANT_OWNER);
+    }
+
+    @Test
     void getUserThrowsWhenUserDoesNotExist() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
