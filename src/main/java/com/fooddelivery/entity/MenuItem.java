@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -20,6 +21,9 @@ public class MenuItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "restaurant_id", nullable = false)
@@ -58,5 +62,12 @@ public class MenuItem {
         this.price = price;
         this.stockQuantity = stockQuantity;
         this.available = available;
+    }
+
+    public void deductStock(int quantity) {
+        if (stockQuantity < quantity) {
+            throw new IllegalArgumentException("Insufficient stock for menu item: " + id);
+        }
+        stockQuantity -= quantity;
     }
 }

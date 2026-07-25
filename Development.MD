@@ -67,6 +67,14 @@ Added order items related to orders and menu items. Each item stores its quantit
 
 Stock decrement, oversell prevention, and concurrent order coordination remain future work.
 
+### Iteration 11 — Order placement integration
+
+Added a transactional order-placement workflow that accepts a customer, restaurant, payment reference, and requested menu items in one request. The service validates the customer, restaurant, item ownership, item availability, duplicate items, and payment-reference uniqueness; locks menu rows for update; deducts stock; calculates the payment total; creates the payment; creates the order; and creates all order items.
+
+The entire workflow runs in one transaction, so a validation or persistence failure rolls back stock changes, payment creation, order creation, and order-item creation together. Menu items now also carry a JPA version for optimistic version tracking, while placement uses pessimistic row locking to serialize stock deductions for the same item.
+
+Added placement DTOs, response mapping, a placement endpoint, unit tests, and Spring integration tests using the shared H2 test profile in `src/test/resources/application-test.yml`. `AbstractIntegrationTest` activates that profile for all future integration tests. Order-item stock reservation and payment processing remain separate from this workflow's external integrations.
+
 ## Verification Approach
 
 Each implementation iteration was kept narrowly scoped and verified with the Gradle test suite:
@@ -76,3 +84,11 @@ Each implementation iteration was kept narrowly scoped and verified with the Gra
 ```
 
 The project uses constructor injection, DTO-only controller contracts, Jakarta Validation, service-layer business logic, repository-only persistence access, Flyway migrations, and global exception handling throughout the implemented slices.
+
+## Design Decisions
+
+### Production database and test database
+
+Production uses PostgreSQL with Flyway-managed migrations. H2 is used only for automated integration tests through the `test` profile in `src/test/resources/application-test.yml`.
+
+This keeps the production runtime aligned with the required PostgreSQL deployment while allowing integration tests to run locally without Docker or an externally managed database. The H2 test URL runs in PostgreSQL compatibility mode, and the same Flyway migrations are applied during the test context. PostgreSQL-specific behavior should still be verified separately when database-specific functionality is introduced.

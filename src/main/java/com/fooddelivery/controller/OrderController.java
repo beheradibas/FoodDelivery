@@ -2,8 +2,11 @@ package com.fooddelivery.controller;
 
 import com.fooddelivery.dto.order.CreateOrderRequest;
 import com.fooddelivery.dto.order.OrderResponse;
+import com.fooddelivery.dto.order.OrderPlacementResponse;
+import com.fooddelivery.dto.order.PlaceOrderRequest;
 import com.fooddelivery.dto.order.UpdateOrderStatusRequest;
 import com.fooddelivery.service.OrderService;
+import com.fooddelivery.service.OrderPlacementService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +24,16 @@ import java.util.List;
 @RequestMapping("/api/orders")
 public class OrderController {
     private final OrderService orderService;
+    private final OrderPlacementService orderPlacementService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, OrderPlacementService orderPlacementService) {
         this.orderService = orderService;
+        this.orderPlacementService = orderPlacementService;
+    }
+
+    @PostMapping("/place")
+    public ResponseEntity<OrderPlacementResponse> placeOrder(@Valid @RequestBody PlaceOrderRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderPlacementService.placeOrder(request));
     }
 
     @PostMapping
