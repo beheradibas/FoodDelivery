@@ -75,6 +75,10 @@ Restricted order status changes to the valid lifecycle sequence `PLACED → ACCE
 
 Added one-to-one order assignment with a delivery partner. The order stores an optimistic-lock version, the assignment has a unique order constraint, and concurrent assignment conflicts are converted into a resource conflict instead of allowing two partners to claim the same order. Added assignment APIs, DTOs, mapping, Flyway migration, and unit tests for first assignment, duplicate assignment, and optimistic-lock conflict handling.
 
+### Iteration 14 — Asynchronous order notifications
+
+Added a Spring `OrderStatusChangedEvent` published when a valid order status transition occurs. Customer, restaurant, and assigned delivery-partner listeners consume the event with `@Async`, using a dedicated notification executor so notification dispatch does not run on the request thread. The notification service is transport-neutral and currently provides the integration boundary for real channels. Added listener tests, including the unassigned-order case.
+
 ### Iteration 11 — Order placement integration
 
 Added a transactional order-placement workflow that accepts a customer, restaurant, payment reference, and requested menu items in one request. The service validates the customer, restaurant, item ownership, item availability, duplicate items, and payment-reference uniqueness; locks menu rows for update; deducts stock; calculates the payment total; creates the payment; creates the order; and creates all order items.

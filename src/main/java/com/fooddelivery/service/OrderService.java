@@ -5,6 +5,7 @@ import com.fooddelivery.dto.order.OrderResponse;
 import com.fooddelivery.dto.order.UpdateOrderStatusRequest;
 import com.fooddelivery.entity.Order;
 import com.fooddelivery.entity.OrderStatus;
+import com.fooddelivery.event.OrderStatusChangedEvent;
 import com.fooddelivery.entity.Payment;
 import com.fooddelivery.entity.Restaurant;
 import com.fooddelivery.entity.Role;
@@ -16,6 +17,7 @@ import com.fooddelivery.repository.PaymentRepository;
 import com.fooddelivery.repository.RestaurantRepository;
 import com.fooddelivery.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -37,14 +39,17 @@ public class OrderService {
     private final RestaurantRepository restaurantRepository;
     private final PaymentRepository paymentRepository;
     private final OrderMapper orderMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public OrderService(OrderRepository orderRepository, UserRepository userRepository, RestaurantRepository restaurantRepository,
-                        PaymentRepository paymentRepository, OrderMapper orderMapper) {
+                        PaymentRepository paymentRepository, OrderMapper orderMapper,
+                        ApplicationEventPublisher eventPublisher) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.restaurantRepository = restaurantRepository;
         this.paymentRepository = paymentRepository;
         this.orderMapper = orderMapper;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -72,11 +77,17 @@ public class OrderService {
     @Transactional
     public OrderResponse updateOrderStatus(Long orderId, UpdateOrderStatusRequest request) {
         Order order = findOrder(orderId);
+        OrderStatus previousStatus = order.getStatus();
         Set<OrderStatus> validStatuses = VALID_TRANSITIONS.getOrDefault(order.getStatus(), Set.of());
         if (!validStatuses.contains(request.status())) {
             throw new IllegalArgumentException("Invalid order status transition from " + order.getStatus() + " to " + request.status());
         }
         order.updateStatus(request.status());
+        Long deliveryPartnerId = order.getDeliveryAssignment() == null
+                ? null
+                : order.getDeliveryAssignment().getDeliveryPartner().getId();
+        eventPublisher.publishEvent(new OrderStatusChangedEvent(order.getId(), order.getCustomer().getId(),
+                order.getRestaurant().getId(), deliveryPartnerId, previousStatus, request.status()));
         return orderMapper.toResponse(order);
     }
 
