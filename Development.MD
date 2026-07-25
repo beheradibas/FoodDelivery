@@ -57,7 +57,7 @@ Payment processing integrations and order integration were intentionally exclude
 
 ### Iteration 9 — Orders
 
-Added orders related to customers, restaurants, and payments, with lifecycle statuses from placement through delivery and rejection. Added order APIs, validation, mapping, tests, and the order migration.
+Added orders related to customers, restaurants, and payments, with lifecycle statuses from placement through delivery. Added order APIs, validation, mapping, tests, and the order migration.
 
 Order items, stock mutation, payment atomicity, partner assignment, and asynchronous notifications were intentionally deferred.
 
@@ -66,6 +66,10 @@ Order items, stock mutation, payment atomicity, partner assignment, and asynchro
 Added order items related to orders and menu items. Each item stores its quantity and unit-price snapshot, validates that the menu item belongs to the order's restaurant, and prevents duplicate menu items within one order at the database level.
 
 Stock decrement, oversell prevention, and concurrent order coordination remain future work.
+
+### Iteration 12 — Order lifecycle validation
+
+Restricted order status changes to the valid lifecycle sequence `PLACED → ACCEPTED → PREPARING → OUT_FOR_DELIVERY → DELIVERED`. Restaurant rejection is represented by terminal `REJECTED`, and customer cancellation by terminal `CANCELLED`; both are allowed from `PLACED`, `ACCEPTED`, and `PREPARING` only. Skipped, repeated, backward, delivery-stage rejection, and delivery-stage cancellation transitions are rejected with validation errors. Added parameterized unit coverage for both outcomes.
 
 ### Iteration 11 — Order placement integration
 

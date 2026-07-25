@@ -4,6 +4,7 @@ import com.fooddelivery.dto.order.CreateOrderRequest;
 import com.fooddelivery.dto.order.OrderResponse;
 import com.fooddelivery.dto.order.UpdateOrderStatusRequest;
 import com.fooddelivery.entity.Order;
+import com.fooddelivery.entity.OrderStatus;
 import com.fooddelivery.entity.Payment;
 import com.fooddelivery.entity.Restaurant;
 import com.fooddelivery.entity.Role;
@@ -18,10 +19,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 @Transactional(readOnly = true)
 public class OrderService {
+    private static final Map<OrderStatus, Set<OrderStatus>> VALID_TRANSITIONS = Map.of(
+            OrderStatus.PLACED, Set.of(OrderStatus.ACCEPTED, OrderStatus.REJECTED, OrderStatus.CANCELLED),
+            OrderStatus.ACCEPTED, Set.of(OrderStatus.PREPARING, OrderStatus.REJECTED, OrderStatus.CANCELLED),
+            OrderStatus.PREPARING, Set.of(OrderStatus.OUT_FOR_DELIVERY, OrderStatus.REJECTED, OrderStatus.CANCELLED),
+            OrderStatus.OUT_FOR_DELIVERY, Set.of(OrderStatus.DELIVERED),
+            OrderStatus.DELIVERED, Set.of());
+
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
@@ -62,6 +72,10 @@ public class OrderService {
     @Transactional
     public OrderResponse updateOrderStatus(Long orderId, UpdateOrderStatusRequest request) {
         Order order = findOrder(orderId);
+        Set<OrderStatus> validStatuses = VALID_TRANSITIONS.getOrDefault(order.getStatus(), Set.of());
+        if (!validStatuses.contains(request.status())) {
+            throw new IllegalArgumentException("Invalid order status transition from " + order.getStatus() + " to " + request.status());
+        }
         order.updateStatus(request.status());
         return orderMapper.toResponse(order);
     }

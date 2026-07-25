@@ -15,6 +15,8 @@ import com.fooddelivery.repository.PaymentRepository;
 import com.fooddelivery.repository.RestaurantRepository;
 import com.fooddelivery.repository.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -92,6 +94,102 @@ class OrderServiceTest {
         OrderResponse response = orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.ACCEPTED));
 
         assertThat(response.status()).isEqualTo(OrderStatus.ACCEPTED);
+    }
+
+    @Test
+    void updateOrderStatusRejectsSkippedTransition() {
+        User customer = customer(1L);
+        Order order = new Order(customer, restaurant(10L), payment(customer, 100L));
+        when(orderRepository.findById(7L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.PREPARING)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid order status transition from PLACED to PREPARING");
+    }
+
+    @Test
+    void updateOrderStatusAllowsOnlyTheCompleteLifecycleInOrder() {
+        User customer = customer(1L);
+        Order order = new Order(customer, restaurant(10L), payment(customer, 100L));
+        when(orderRepository.findById(7L)).thenReturn(Optional.of(order));
+
+        orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.ACCEPTED));
+        orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.PREPARING));
+        orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.OUT_FOR_DELIVERY));
+        OrderResponse response = orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.DELIVERED));
+
+        assertThat(response.status()).isEqualTo(OrderStatus.DELIVERED);
+        assertThatThrownBy(() -> orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.ACCEPTED)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = OrderStatus.class, names = {"PLACED", "ACCEPTED", "PREPARING"})
+    void everyActiveStateCanTransitionToRejected(OrderStatus currentStatus) {
+        User customer = customer(1L);
+        Order order = new Order(customer, restaurant(10L), payment(customer, 100L));
+        advanceTo(order, currentStatus);
+        when(orderRepository.findById(7L)).thenReturn(Optional.of(order));
+
+        OrderResponse response = orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.REJECTED));
+
+        assertThat(response.status()).isEqualTo(OrderStatus.REJECTED);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = OrderStatus.class, names = {"PLACED", "ACCEPTED", "PREPARING"})
+    void everyCancellableStateCanTransitionToCancelled(OrderStatus currentStatus) {
+        User customer = customer(1L);
+        Order order = new Order(customer, restaurant(10L), payment(customer, 100L));
+        advanceTo(order, currentStatus);
+        when(orderRepository.findById(7L)).thenReturn(Optional.of(order));
+
+        OrderResponse response = orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.CANCELLED));
+
+        assertThat(response.status()).isEqualTo(OrderStatus.CANCELLED);
+    }
+
+    @Test
+    void rejectedIsTerminal() {
+        User customer = customer(1L);
+        Order order = new Order(customer, restaurant(10L), payment(customer, 100L));
+        order.updateStatus(OrderStatus.REJECTED);
+        when(orderRepository.findById(7L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.ACCEPTED)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void deliveryStageCannotBeRejectedOrCancelled() {
+        User customer = customer(1L);
+        Order order = new Order(customer, restaurant(10L), payment(customer, 100L));
+        advanceTo(order, OrderStatus.OUT_FOR_DELIVERY);
+        when(orderRepository.findById(7L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.REJECTED)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> orderService.updateOrderStatus(7L, new UpdateOrderStatusRequest(OrderStatus.CANCELLED)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private void advanceTo(Order order, OrderStatus target) {
+        if (target == OrderStatus.ACCEPTED) order.updateStatus(OrderStatus.ACCEPTED);
+        if (target == OrderStatus.PREPARING) {
+            order.updateStatus(OrderStatus.ACCEPTED);
+            order.updateStatus(OrderStatus.PREPARING);
+        }
+        if (target == OrderStatus.OUT_FOR_DELIVERY) {
+            order.updateStatus(OrderStatus.ACCEPTED);
+            order.updateStatus(OrderStatus.PREPARING);
+            order.updateStatus(OrderStatus.OUT_FOR_DELIVERY);
+        }
+        if (target == OrderStatus.DELIVERED) {
+            order.updateStatus(OrderStatus.ACCEPTED);
+            order.updateStatus(OrderStatus.PREPARING);
+            order.updateStatus(OrderStatus.OUT_FOR_DELIVERY);
+            order.updateStatus(OrderStatus.DELIVERED);
+        }
     }
 
     private User customer(Long id) {
